@@ -5,6 +5,7 @@ This folder contains files to enable German word deinflection in Yomitan.
 ## Files
 
 - `german-transforms.js` — German word deinflection rules for Yomitan
+- `german-transforms.test.js` — unit tests for the deinflection rules (Node.js built-in test runner)
 
 ## What is this?
 
@@ -51,6 +52,34 @@ This is a community-made solution and may not cover all German word forms. Known
 - Umlaut handling is basic (ä→a, ö→o, ü→u)
 
 Feel free to improve this file and contribute back!
+
+## Running tests (for contributors)
+
+If you want to modify or extend the German rules, you can run the unit tests locally using Node.js's built-in test runner ([docs](https://nodejs.org/api/test.html)).
+
+- **Requirements**: Node.js 20+ (no extra libraries needed)
+
+Steps:
+
+1. Open a terminal in this folder:
+
+   ```bash
+   cd yomitan-de-language
+   ```
+
+2. Run the test suite directly with Node:
+
+   ```bash
+   node --test german-transforms.test.js
+   ```
+
+   or, using the convenience script:
+
+   ```bash
+   npm test
+   ```
+
+The tests in `german-transforms.test.js` cover core declension, conjugation, complex verb, and miscellaneous rules to help prevent regressions when you change `german-transforms.js`.
 
 ## Credits
 

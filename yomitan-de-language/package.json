@@ -1,0 +1,10 @@
+{
+  "name": "yomitan-german-transforms",
+  "version": "1.0.0",
+  "description": "German deinflection rules for Yomitan with unit tests (Node.js built-in runner)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}
