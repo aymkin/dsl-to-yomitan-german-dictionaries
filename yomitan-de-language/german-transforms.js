@@ -35,9 +35,14 @@ function safeResult(original, candidate) {
 // Возврат умлаута (ä->a, ö->o, ü->u) только последнего вхождения
 function deinflectUmlaut(term) {
     if (term.includes('äu')) return term.replace(/äu(?!.*äu)/, 'au');
+    if (term.includes('Äu')) return term.replace(/Äu(?!.*Äu)/, 'Au');
+    if (term.includes('ÄU')) return term.replace(/ÄU(?!.*ÄU)/, 'AU');
     if (term.includes('ä')) return term.replace(/ä(?!.*ä)/, 'a');
+    if (term.includes('Ä')) return term.replace(/Ä(?!.*Ä)/, 'A');
     if (term.includes('ö')) return term.replace(/ö(?!.*ö)/, 'o');
+    if (term.includes('Ö')) return term.replace(/Ö(?!.*Ö)/, 'O');
     if (term.includes('ü')) return term.replace(/ü(?!.*ü)/, 'u');
+    if (term.includes('Ü')) return term.replace(/Ü(?!.*Ü)/, 'U');
     return term;
 }
 
@@ -56,7 +61,7 @@ function makeSimpleRule(suffix, replacement = '', conditionsIn = [], conditionsO
 }
 
 function makeUmlautRule(suffix, replacement = '', conditionsIn = [], conditionsOut = []) {
-    const regex = new RegExp(`[äöü].*${suffix}$`);
+    const regex = new RegExp(`[äöüÄÖÜ].*${suffix}$`);
     return {
         type: 'other',
         isInflected: regex,
@@ -74,7 +79,11 @@ function makeUmlautRule(suffix, replacement = '', conditionsIn = [], conditionsO
 
 // 1) Существительные/прилагательные (сужено)
 const declensionRules = [
-    // сначала более специфичные длинные окончания
+    // сначала более специфичные umlaut-варианты
+    makeUmlautRule('er', '', ['n', 'adj'], ['n', 'adj']),
+    makeUmlautRule('en', '', ['n', 'adj'], ['n', 'adj']),
+    makeUmlautRule('e', '', ['n', 'adj'], ['n', 'adj']),
+    // длинные окончания
     makeSimpleRule('ern', '', ['n', 'adj'], ['n', 'adj']),
     makeSimpleRule('esten', '', ['adj'], ['adj']),
     makeSimpleRule('sten', '', ['adj'], ['adj']),
@@ -85,11 +94,6 @@ const declensionRules = [
     makeSimpleRule('e', '', ['n', 'adj'], ['n', 'adj']),
     makeSimpleRule('n', '', ['n'], ['n']),
     makeSimpleRule('s', '', ['n'], ['n']),
-
-    // umlaut-варианты
-    makeUmlautRule('er', '', ['n', 'adj'], ['n', 'adj']),
-    makeUmlautRule('en', '', ['n', 'adj'], ['n', 'adj']),
-    makeUmlautRule('e', '', ['n', 'adj'], ['n', 'adj']),
 ];
 
 // 2) Feminine forms
@@ -218,7 +222,7 @@ export const germanTransforms = {
         declension: {
             name: 'Declension',
             description: 'Nouns and Adjectives',
-            rules: [...declensionRules, ...feminineRules]
+            rules: [...feminineRules,...declensionRules]
         },
         conjugation: {
             name: 'Conjugation',
