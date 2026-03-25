@@ -193,6 +193,42 @@ class TestTeiEntryToStructuredContent:
             comment_span = defn_div["content"]
             assert comment_span["data"]["content"] == "comment"
 
+    def test_german_pos_labels(self):
+        entry = TeiEntry(
+            headword="Haus",
+            pronunciations=[],
+            pos="n",
+            translations=["house"],
+            definitions=[],
+        )
+        content = tei_entry_to_structured_content(entry, target_lang="de")
+        pos_span = content[0]["content"]
+        assert pos_span["content"] == "Subst."
+
+    def test_dutch_pos_labels(self):
+        entry = TeiEntry(
+            headword="kat",
+            pronunciations=[],
+            pos="n",
+            translations=["кот"],
+            definitions=[],
+        )
+        content = tei_entry_to_structured_content(entry, target_lang="nl")
+        pos_span = content[0]["content"]
+        assert pos_span["content"] == "znw."
+
+    def test_unknown_lang_falls_back_to_russian(self):
+        entry = TeiEntry(
+            headword="chat",
+            pronunciations=[],
+            pos="n",
+            translations=["кот"],
+            definitions=[],
+        )
+        content = tei_entry_to_structured_content(entry, target_lang="fr")
+        pos_span = content[0]["content"]
+        assert pos_span["content"] == "сущ."
+
 
 class TestTeiPosToRules:
     def test_noun(self):

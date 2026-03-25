@@ -1,4 +1,5 @@
 import argparse
+import itertools
 import logging
 import sys
 from datetime import datetime
@@ -66,9 +67,9 @@ def detect_languages(dict_title: str, filename: str) -> tuple[str, str]:
     combined = f"{dict_title} {filename}".lower()
 
     # Dutch pairs
-    if "nl-ru" in combined or "nld-rus" in combined or "nlru" in combined:
+    if "nl-ru" in combined or "nld-rus" in combined:
         return "nl", "ru"
-    if "ru-nl" in combined or "rus-nld" in combined or "runl" in combined:
+    if "ru-nl" in combined or "rus-nld" in combined:
         return "ru", "nl"
     if "nl-de" in combined or "nld-deu" in combined:
         return "nl", "de"
@@ -76,9 +77,9 @@ def detect_languages(dict_title: str, filename: str) -> tuple[str, str]:
         return "de", "nl"
 
     # German pairs
-    if "de-ru" in combined or "deru" in combined:
+    if "de-ru" in combined or "deu-rus" in combined:
         return "de", "ru"
-    if "ru-de" in combined or "rude" in combined:
+    if "ru-de" in combined or "rus-deu" in combined:
         return "ru", "de"
 
     # Default: German-German
@@ -98,22 +99,20 @@ def process_tei_files(input_path: Path, output_dir: str) -> None:
         dict_name = tei_file.stem
         packer = YomitanPacker(output_dir, dict_name)
 
-        # First pass to get metadata
-        preview_parser = TeiParser(str(tei_file))
-        # Trigger header parsing by starting iteration
-        for _ in preview_parser.parse():
-            break
+        # Get first entry to trigger header parsing, then read metadata
+        entries_iter = tei_parser.parse()
+        first_entry = next(entries_iter, None)
 
-        dict_title = preview_parser.title or dict_name
+        dict_title = tei_parser.title or dict_name
         source_lang, target_lang = detect_languages(dict_title, dict_name)
 
-        # If the TEI header has source language info, use it
-        if preview_parser.source_lang:
-            source_lang = preview_parser.source_lang
+        if tei_parser.source_lang:
+            source_lang = tei_parser.source_lang
 
         sequence = 1
-        for entry in tei_parser.parse():
-            structured_content = tei_entry_to_structured_content(entry)
+        all_entries = itertools.chain([first_entry], entries_iter) if first_entry else iter([])
+        for entry in all_entries:
+            structured_content = tei_entry_to_structured_content(entry, target_lang)
             glossary = [{"type": "structured-content", "content": structured_content}]
             rules = tei_pos_to_rules(entry.pos)
 
@@ -150,14 +149,11 @@ def process_dsl_files(input_path: Path, output_dir: str) -> None:
         dsl_parser = DslParser(str(main_dsl))
         converter = DslConverter(abbreviations)
 
-        # Trigger header parsing
-        temp_parser = DslParser(str(main_dsl))
-        try:
-            next(temp_parser.parse())
-        except StopIteration:
-            pass
+        # Get first entry to trigger header parsing, then read metadata
+        entries_iter = dsl_parser.parse()
+        first_entry = next(entries_iter, None)
 
-        dict_title = temp_parser.headers.get("NAME", main_dsl.stem)
+        dict_title = dsl_parser.headers.get("NAME", main_dsl.stem)
         filename = main_dsl.stem
         if "Langenscheidt" in dict_title or "langens" in filename.lower():
             dict_title = "Langenscheidt De-De"
@@ -170,7 +166,8 @@ def process_dsl_files(input_path: Path, output_dir: str) -> None:
         packer = YomitanPacker(output_dir, main_dsl.stem)
 
         sequence = 1
-        for entry in dsl_parser.parse():
+        all_entries = itertools.chain([first_entry], entries_iter) if first_entry else iter([])
+        for entry in all_entries:
             headword = entry["headword"]
             clean_headword = converter.clean_headword(headword)
 

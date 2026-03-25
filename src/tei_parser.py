@@ -41,7 +41,6 @@ class TeiParser:
         self.file_path = file_path
         self.title: str = ""
         self.source_lang: str = ""
-        self.target_lang: str = ""
         self.headword_count: int = 0
 
     def parse(self) -> Iterator[TeiEntry]:
@@ -140,13 +139,13 @@ class TeiParser:
                     definitions.append(defn.text.strip())
 
 
-def tei_entry_to_structured_content(entry: TeiEntry) -> list[dict[str, Any]]:
+def tei_entry_to_structured_content(entry: TeiEntry, target_lang: str = "ru") -> list[dict[str, Any]]:
     """Converts a TeiEntry to Yomitan structured-content JSON."""
     content_items: list[dict[str, Any]] = []
 
     # POS line
     if entry.pos:
-        pos_label = _pos_to_label(entry.pos)
+        pos_label = _pos_to_label(entry.pos, target_lang)
         content_items.append({
             "tag": "div",
             "data": {"content": "sense"},
@@ -204,23 +203,29 @@ def tei_entry_to_structured_content(entry: TeiEntry) -> list[dict[str, Any]]:
     return content_items
 
 
-def _pos_to_label(pos: str) -> str:
+def _pos_to_label(pos: str, target_lang: str = "ru") -> str:
     """Maps TEI POS codes to human-readable labels."""
-    mapping = {
-        "n": "сущ.",
-        "v": "гл.",
-        "adj": "прил.",
-        "adv": "нареч.",
-        "pn": "собств.",
-        "suffix": "суфф.",
-        "prefix": "прист.",
-        "prep": "предл.",
-        "conj": "союз",
-        "interj": "межд.",
-        "pron": "мест.",
-        "num": "числ.",
-        "art": "арт.",
+    mappings = {
+        "ru": {
+            "n": "сущ.", "v": "гл.", "adj": "прил.", "adv": "нареч.",
+            "pn": "собств.", "suffix": "суфф.", "prefix": "прист.",
+            "prep": "предл.", "conj": "союз", "interj": "межд.",
+            "pron": "мест.", "num": "числ.", "art": "арт.",
+        },
+        "de": {
+            "n": "Subst.", "v": "V.", "adj": "Adj.", "adv": "Adv.",
+            "pn": "Eigenn.", "suffix": "Suff.", "prefix": "Präf.",
+            "prep": "Präp.", "conj": "Konj.", "interj": "Interj.",
+            "pron": "Pron.", "num": "Num.", "art": "Art.",
+        },
+        "nl": {
+            "n": "znw.", "v": "ww.", "adj": "bn.", "adv": "bw.",
+            "pn": "eigenn.", "suffix": "suff.", "prefix": "voorv.",
+            "prep": "vz.", "conj": "vw.", "interj": "tw.",
+            "pron": "vnw.", "num": "telw.", "art": "lidw.",
+        },
     }
+    mapping = mappings.get(target_lang, mappings["ru"])
     return mapping.get(pos, pos)
 
 
